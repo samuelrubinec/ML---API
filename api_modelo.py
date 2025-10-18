@@ -115,9 +115,8 @@ def predict():
         predictions_cache[features] = predicted_class
         logger.info("Cache updated para %s", features)
 
-    # Cria uma nova sessão para acessar o banco de dados
+    # Armazenar no banco de dados a predição
     db = SessionLocal()
-    # Cria um objeto Prediction com os dados da flor e o resultado previsto
     new_pred = Prediction(
         sepal_length=sepal_length,
         sepal_width=sepal_width,
@@ -125,11 +124,8 @@ def predict():
         petal_width=petal_width,
         predicted_class=predicted_class
     )
-    # Adiciona o objeto à sessão
     db.add(new_pred)
-    # Salva (confirma) no banco de dados
     db.commit()
-    # Fecha a sessão
     db.close()
 
     return jsonify({"prediction": predicted_class})
