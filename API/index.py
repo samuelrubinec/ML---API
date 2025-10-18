@@ -1,1 +1,0 @@
-from api.api_modelo import app as app
