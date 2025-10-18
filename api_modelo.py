@@ -91,44 +91,44 @@ def predict():
       "petal_width": 0.2
     }
     """
-    data = request.get_json(force=True)
     try:
+        data = request.get_json(force=True)
         sepal_length = float(data["sepal_length"])
         sepal_width = float(data["sepal_width"])
         petal_length = float(data["petal_length"])
         petal_width = float(data["petal_width"])
-    except (ValueError, KeyError) as e:
-        logger.error("Dados de entrada inválidos: %s", e)
-        return jsonify({"error": "Dados inválidos, verifique parâmetros"}), 400
 
-    # Verificar se já está no cache
-    features = (sepal_length, sepal_width, petal_length, petal_width)
-    if features in predictions_cache:
-        logger.info("Cache hit para %s", features)
-        predicted_class = predictions_cache[features]
-    else:
-        # Rodar o modelo
-        input_data = np.array([features])
-        prediction = model.predict(input_data)
-        predicted_class = int(prediction[0])
-        # Armazenar no cache
-        predictions_cache[features] = predicted_class
-        logger.info("Cache updated para %s", features)
+        # Verificar se já está no cache
+        features = (sepal_length, sepal_width, petal_length, petal_width)
+        if features in predictions_cache:
+            logger.info("Cache hit para %s", features)
+            predicted_class = predictions_cache[features]
+        else:
+            # Rodar o modelo
+            input_data = np.array([features])
+            predicted_class = int(model.predict(input_data)[0])
+            # Armazenar no cache
+            predictions_cache[features] = predicted_class
+            logger.info("Cache updated para %s", features)
 
-    # Armazenar no banco de dados a predição
-    db = SessionLocal()
-    new_pred = Prediction(
-        sepal_length=sepal_length,
-        sepal_width=sepal_width,
-        petal_length=petal_length,
-        petal_width=petal_width,
-        predicted_class=predicted_class
-    )
-    db.add(new_pred)
-    db.commit()
-    db.close()
+        # Armazenar no banco de dados a predição
+        db = SessionLocal()
+        new_pred = Prediction(
+            sepal_length=sepal_length,
+            sepal_width=sepal_width,
+            petal_length=petal_length,
+            petal_width=petal_width,
+            predicted_class=predicted_class
+        )
+        db.add(new_pred)
+        db.commit()
+        db.close()
 
-    return jsonify({"prediction": predicted_class})
+        return jsonify({"prediction": predicted_class})
+    except Exception as e:
+        import traceback
+        logger.error(f"Erro interno na predição: {e}")
+        return jsonify({"error": str(e), "trace": traceback.format_exc()}), 500
 
 
 @app.route("/predictions", methods=["GET"])
